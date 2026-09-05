@@ -28,6 +28,7 @@ function makeCtx() {
         return () => upgrades.delete(path);
       },
     },
+    inject: () => {},
     effect: (fn) => {
       disposer = fn();
     },

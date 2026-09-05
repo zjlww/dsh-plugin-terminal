@@ -24,6 +24,7 @@ const ctx = {
     },
   },
   get: () => undefined,
+  inject: () => {},
   effect: () => () => {},
 }
 const dataDir = mkdtempSync(pathJoin(tmpdir(), 'dsh-term-test-'))

@@ -20,6 +20,7 @@ function makeCtx(workspacePathBySession) {
       register: ({ handler: h }) => { handler = h; return () => {}; },
       registerUpgrade: () => () => {},
     },
+    inject: () => {},
     effect: (fn) => { disposer = fn(); },
     get: (name) => name === "workspaceRegistry"
       ? { host: { sessionPath: (id) => workspacePathBySession?.[id] } }

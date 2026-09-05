@@ -21,6 +21,7 @@ function makeCtx() {
       },
       registerUpgrade: () => () => {},
     },
+    inject: () => {},
     effect: (fn) => { disposer = fn(); },
   };
   return { ctx, getHandler: () => handler, getDisposer: () => disposer };
