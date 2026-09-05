@@ -15,6 +15,7 @@ import React from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { createComposerClearance } from "./composer-clearance.js";
 import { parseShortcut, matchesShortcut } from "./shortcut.js";
 
 const PREFIX = "/terminal-panel";
@@ -434,24 +435,16 @@ function TerminalPanel(props) {
   /** conversation-column geometry: the panel never covers the side rails */
   const [geo, setGeo] = useState({ left: 0, width: window.innerWidth });
 
-  /* The terminal bar/panel is pinned to the viewport bottom; the composer card
-   * (the nearest ancestor holding the textarea) gets margin-bottom equal to the
-   * panel's rendered height, so the input dialog ALWAYS sits above the terminal
-   * - collapsed bar (34px) and expanded panel alike. */
+  /* The terminal stays pinned to the viewport bottom. Reserve its measured
+   * height below DSH's explicit composer seat so the sticky composer and the
+   * scrollable message area move upward instead of sitting behind the panel.
+   * The reservation follows collapsed, expanded, and drag-resized heights. */
   const { useLayoutEffect } = React;
   useLayoutEffect(() => {
     const rootEl = rootRef.current;
     if (rootEl === null) return;
     const host = () => rootEl.closest("[data-conversation-scroll]") ?? rootEl.parentElement;
-    const findComposer = () => {
-      let el = rootEl.parentElement;
-      while (el !== null && el !== document.body) {
-        if (el.querySelector("textarea") !== null) return el;
-        el = el.parentElement;
-      }
-      return null;
-    };
-    let card = null;
+    const clearance = createComposerClearance(rootEl);
     const measure = () => {
       const el = host();
       if (el !== null) {
@@ -459,9 +452,8 @@ function TerminalPanel(props) {
         setGeo({ left: r.left, width: r.width });
       }
       const h = Math.round(rootEl.getBoundingClientRect().height);
-      if (card !== null) card.style.marginBottom = h > 0 ? h + "px" : "";
+      clearance?.setHeight(h);
     };
-    card = findComposer();
     const el = host();
     const ro = new ResizeObserver(measure);
     if (el !== null) ro.observe(el);
@@ -471,7 +463,7 @@ function TerminalPanel(props) {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", measure);
-      if (card !== null) card.style.marginBottom = "";
+      clearance?.restore();
     };
   }, []);
 
