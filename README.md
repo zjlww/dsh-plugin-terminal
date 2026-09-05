@@ -22,7 +22,7 @@ dsh plugin --profile web add dsh-plugin-terminal && dsh web
 
 - Bottom panel pinned to the viewport, aligned with the conversation column; the input box always stays above the terminal
 - Configurable shortcut toggles (default `Ctrl+``, e.g. `Ctrl+J`); drag the top grip to resize (120px–78% viewport, remembered)
-- Multi-tab: `+` new, ✕ close, ⟳ restart; processes keep running on tab switch; live sessions restore after refresh or workspace switch
+- Multi-tab: `+` new, ✕ close, ⟳ restart; processes keep running on tab switch; live sessions restore after refresh or workspace switch; opening the panel from an exited tab automatically creates and selects a fresh live terminal
 - Every terminal remembers its working directory: new tabs start in the current DSH workspace; after a `dsh web` restart, ⟳ brings the process back in its original directory instead of the server launch directory
 - **Terminals survive dsh web restarts**: session metadata + scrollback are persisted live to `$DSH_HOME/plugin-data/terminal/`; after a restart they come back as "exited" history tabs (full screen replay, one-click restart of the process); tabs you closed stay closed
 - xterm.js 6: colors, blinking cursor, alternate screen, Unicode v11 (CJK width tables), 10000-line scrollback

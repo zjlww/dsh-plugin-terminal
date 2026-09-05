@@ -17,6 +17,10 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { createComposerClearance } from "./composer-clearance.js";
 import {
+  createTerminalOpenCoordinator,
+  decideTerminalOpen,
+} from "./open-terminal.js";
+import {
   parseShortcut,
   matchesShortcut,
   shouldDeferShortcutToTerminal,
@@ -435,6 +439,10 @@ function TerminalPanel(props) {
   const bootOnce = useRef(false);
   const [bootReady, setBootReady] = useState(false);
   const openHandled = useRef(false);
+  const openCoordinator = useRef(null);
+  if (openCoordinator.current === null) {
+    openCoordinator.current = createTerminalOpenCoordinator();
+  }
   const rootRef = useRef(null);
   /** conversation-column geometry: the panel never covers the side rails */
   const [geo, setGeo] = useState({ left: 0, width: window.innerWidth });
@@ -511,17 +519,45 @@ function TerminalPanel(props) {
     })();
   }, []);
 
-  /* first open with no restored tabs: create one session. openHandled guards
-   * so closing the last tab does NOT auto-create - only a fresh open does. */
+  /* Handle each closed -> open transition once, after session restoration.
+   * Revalidate against the host because panes/WebSockets are unmounted while
+   * collapsed, so their cached `exited` flags can be stale. Preserve dead tabs
+   * as history and append/select a fresh terminal only when the selected host
+   * session is missing or exited. The coordinator deduplicates rapid reopens. */
   useEffect(() => {
+    const action = decideTerminalOpen({
+      open,
+      bootReady,
+      handled: openHandled.current,
+    });
+    openHandled.current = action.handled;
     if (!open) {
-      openHandled.current = false;
+      openCoordinator.current.cancel();
       return;
     }
-    if (!bootReady || tabs.length > 0 || openHandled.current) return;
-    openHandled.current = true;
-    newTab();
-  }, [open, bootReady, tabs.length]);
+    if (!action.ensure) return;
+
+    openCoordinator.current.ensure({
+      active,
+      listSessions: async () => (await api("/sessions")).sessions ?? [],
+      reconcileSessions: (sessions) => {
+        const byId = new Map(sessions.map((session) => [session.id, session]));
+        setTabs((cur) => cur.map((tab) => {
+          const host = byId.get(tab.id);
+          return host === undefined
+            ? { ...tab, exited: true }
+            : { ...tab, exited: !!host.exited };
+        }));
+      },
+      createTerminal: newTab,
+    }).catch((err) => {
+      console.error("[dsh-plugin-terminal] open validation failed:", err);
+    });
+  }, [open, bootReady, active?.id]);
+
+  useEffect(() => () => {
+    openCoordinator.current?.cancel();
+  }, []);
 
   /* fetch the host-side plugin config: the toggle shortcut (and, for future
    * use, the configured shell command). Falls back to the defaults when the
