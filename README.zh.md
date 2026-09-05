@@ -32,12 +32,19 @@ dsh plugin --profile web add dsh-plugin-terminal && dsh web
 
 ## 配置
 
-插件行为存放在 DSH 设置文档（`$DSH_HOME/settings.yaml` 的 `terminal` 段），可在 GUI **设置 → 插件** 里直接改。改动对之后新建的会话即时生效（无需重启）；已存在的标签保留它们启动时的命令。
+插件行为存放在 DSH 设置文档（`$DSH_HOME/settings.yaml` 的 `terminal` 段），可在 GUI **设置 → 插件** 里直接改。快捷键改动在下次页面/插件挂载时生效；shell 命令改动用于之后新建的会话，已存在的标签保留它们启动时的命令。
 
 | 字段 | 默认值 | 含义 |
 |---|---|---|
-| `toggleShortcut` | `ctrl+`` | 展开/收起底部面板的快捷键。格式：`[ctrl\|shift\|alt\|meta]+[...]+键`，如 `ctrl+j`、`ctrl+shift+f1`。键可以是字母、数字、F1–F12，或名称（```、space、enter、tab、up/down/left/right、home/end、pageup/pagedown、delete、backspace、escape）。 |
+| `toggleShortcut` | `ctrl+`` | 展开/收起底部面板的快捷键。格式：`[ctrl\|shift\|alt\|meta]+[...]+键`，如 `meta+j`（macOS 上为 Command+J）、`ctrl+j`、`ctrl+shift+f1`。键可以是字母、数字、F1–F12，或名称（```、space、enter、tab、up/down/left/right、home/end、pageup/pagedown、delete、backspace、escape）。 |
 | `shellCommand` | （空 = 自动探测） | 新建终端会话时使用的命令行。留空则用平台默认（Windows 下 pwsh/powershell/cmd，POSIX 下 `$SHELL`）。 |
+
+示例 —— 在 macOS 上把面板绑定到 Command+J：
+
+```yaml
+terminal:
+  toggleShortcut: meta+j
+```
 
 示例 —— Windows 上以 cmder 启动终端，并把面板绑定到 Ctrl+J：
 
@@ -50,7 +57,7 @@ terminal:
 说明：
 
 - `shellCommand` 按原样使用（不会注入任何参数）：按空格拆分、双引号内的路径视为整体。
-- 如果快捷键是终端本身也会消费的按键（Ctrl+J 是 shell 的换行符 ^J），当焦点在终端面板内时按下会留给 shell，而不是切换面板。
+- Meta 快捷键（macOS 上的 Command）即使终端拥有焦点也会切换面板。非 Meta 快捷键在终端面板内匹配时会留给 shell（例如 Ctrl+J 是换行符 ^J）。
 - 运维级覆盖：环境变量 `DSH_PLUGIN_TERMINAL_TOGGLE_SHORTCUT` 和 `DSH_PLUGIN_TERMINAL_SHELL_COMMAND` 优先于设置文档（也是无 settings 服务的 headless 组合下唯一的配置方式）。
 
 ## 在面板里运行 codex / claude code

@@ -16,7 +16,11 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { createComposerClearance } from "./composer-clearance.js";
-import { parseShortcut, matchesShortcut } from "./shortcut.js";
+import {
+  parseShortcut,
+  matchesShortcut,
+  shouldDeferShortcutToTerminal,
+} from "./shortcut.js";
 
 const PREFIX = "/terminal-panel";
 const HEIGHT_KEY = "dsh-plugin-terminal.height";
@@ -537,14 +541,15 @@ function TerminalPanel(props) {
     })();
   }, []);
 
-  /* configurable toggle shortcut (default Ctrl+`, e.g. ctrl+j). When the
-   * shortcut is a control character the terminal also consumes (Ctrl+J is
-   * the shell's line feed), a press with focus inside a terminal pane is
-   * left to the shell instead of toggling the panel. */
+  /* Configurable toggle shortcut (default Ctrl+`, e.g. meta+j). Non-Meta
+   * chords keep reaching a focused terminal (Ctrl+J is the shell's line
+   * feed), while Meta/Command chords always toggle the panel. */
   useEffect(() => {
     const onKey = (e) => {
       if (!matchesShortcut(shortcut, e)) return;
-      if (e.target instanceof HTMLElement && e.target.closest(".dshTermPane") !== null) return;
+      const insideTerminal = e.target instanceof HTMLElement
+        && e.target.closest(".dshTermPane") !== null;
+      if (shouldDeferShortcutToTerminal(shortcut, insideTerminal)) return;
       e.preventDefault();
       setOpen((v) => !v);
     };

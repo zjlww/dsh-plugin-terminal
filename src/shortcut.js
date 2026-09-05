@@ -89,3 +89,12 @@ export function matchesShortcut(spec, ev) {
     && ev.altKey === spec.alt
     && ev.metaKey === spec.meta;
 }
+
+/**
+ * Let terminal-focused non-Meta chords reach the PTY (for example Ctrl+J is
+ * line feed). Meta is Command on macOS and is reserved for the panel toggle,
+ * so a configured Command chord works even while xterm owns keyboard focus.
+ */
+export function shouldDeferShortcutToTerminal(spec, insideTerminal) {
+  return insideTerminal && spec !== null && !spec.meta;
+}

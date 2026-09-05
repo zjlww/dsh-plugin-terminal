@@ -6,7 +6,11 @@
  */
 import assert from "node:assert/strict";
 import { splitCommandLine, pickFirst } from "../src/server-command.js";
-import { parseShortcut, matchesShortcut } from "../src/shortcut.js";
+import {
+  parseShortcut,
+  matchesShortcut,
+  shouldDeferShortcutToTerminal,
+} from "../src/shortcut.js";
 
 let passed = 0;
 const ok = (name) => { passed++; console.log("ok -", name); };
@@ -48,6 +52,10 @@ assert.notEqual(ctrlBackquote, null);
 assert.equal(ctrlBackquote.code, "Backquote");
 assert.equal(ctrlBackquote.label, "Ctrl+`");
 ok('parse "ctrl+`"');
+const metaJ = parseShortcut("meta+j");
+assert.notEqual(metaJ, null);
+assert.deepEqual({ ...metaJ }, { ctrl: false, shift: false, alt: false, meta: true, code: "KeyJ", label: "Meta+J" });
+ok('parse "meta+j" as Command+J');
 const shiftF1 = parseShortcut("ctrl+shift+f1");
 assert.notEqual(shiftF1, null);
 assert.equal(shiftF1.code, "F1");
@@ -68,6 +76,13 @@ assert.equal(matchesShortcut(ctrlJ, mk("KeyJ", { ctrl: true })), true);
 assert.equal(matchesShortcut(ctrlJ, mk("KeyJ", { ctrl: true, shift: true })), false);
 assert.equal(matchesShortcut(ctrlJ, mk("KeyK", { ctrl: true })), false);
 assert.equal(matchesShortcut(null, mk("KeyJ", { ctrl: true })), false);
+assert.equal(matchesShortcut(metaJ, mk("KeyJ", { meta: true })), true);
 ok("matchesShortcut checks code and exact modifiers");
+
+/* A configured Command chord toggles even when xterm owns focus. */
+assert.equal(shouldDeferShortcutToTerminal(metaJ, true), false);
+assert.equal(shouldDeferShortcutToTerminal(ctrlJ, true), true);
+assert.equal(shouldDeferShortcutToTerminal(ctrlJ, false), false);
+ok("Meta shortcut toggles while terminal is focused");
 
 console.log("\n" + passed + " groups passed");

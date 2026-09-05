@@ -32,12 +32,19 @@ dsh plugin --profile web add dsh-plugin-terminal && dsh web
 
 ## Configuration
 
-Plugin behavior lives in the DSH settings document (`$DSH_HOME/settings.yaml`, section `terminal`), editable from the GUI at **Settings → Plugins**. Changes apply to sessions created afterwards — no restart needed; tabs that already exist keep the command they started with.
+Plugin behavior lives in the DSH settings document (`$DSH_HOME/settings.yaml`, section `terminal`), editable from the GUI at **Settings → Plugins**. Shortcut changes apply on the next page/plugin mount; shell-command changes apply to sessions created afterwards, and existing tabs keep the command they started with.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `toggleShortcut` | `ctrl+`` | Keyboard shortcut toggling the bottom panel. Format: `[ctrl|shift|alt|meta]+[...]+key`, e.g. `ctrl+j`, `ctrl+shift+f1`. The key can be a letter, digit, F1–F12, or a name (```, space, enter, tab, up/down/left/right, home/end, pageup/pagedown, delete, backspace, escape). |
+| `toggleShortcut` | `ctrl+`` | Keyboard shortcut toggling the bottom panel. Format: `[ctrl|shift|alt|meta]+[...]+key`, e.g. `meta+j` (Command+J on macOS), `ctrl+j`, or `ctrl+shift+f1`. The key can be a letter, digit, F1–F12, or a name (```, space, enter, tab, up/down/left/right, home/end, pageup/pagedown, delete, backspace, escape). |
 | `shellCommand` | *(empty — auto-detect)* | Command line used to start **new** terminal sessions. Empty means the platform default (pwsh/powershell/cmd on Windows, `$SHELL` on POSIX). |
+
+Example — bind the panel to Command+J on macOS:
+
+```yaml
+terminal:
+  toggleShortcut: meta+j
+```
 
 Example — launch cmder on Windows and bind the panel to Ctrl+J:
 
@@ -50,7 +57,7 @@ terminal:
 Notes:
 
 - `shellCommand` is used verbatim (no flags are injected): the command line is split on spaces with double quotes honored, so quoted paths work.
-- If the shortcut is a key the terminal also consumes (Ctrl+J is the shell's line feed), a press while a terminal pane has focus goes to the shell instead of toggling the panel.
+- Meta shortcuts (Command on macOS) toggle even while the terminal has focus. Non-Meta shortcuts that match while a terminal pane has focus go to the shell instead (for example, Ctrl+J is line feed).
 - Operator override: the environment variables `DSH_PLUGIN_TERMINAL_TOGGLE_SHORTCUT` and `DSH_PLUGIN_TERMINAL_SHELL_COMMAND` take precedence over the settings document (and are the only way to configure headless compositions without the settings service).
 
 ## Running codex / claude code in the panel
