@@ -21,6 +21,7 @@ const dataDir = mkdtempSync(join(tmpdir(), 'dsh-term-settings-compat-'))
 process.env.DSH_PLUGIN_TERMINAL_DATA = dataDir
 
 let registeredNamespace
+let registeredRoute
 let watched = false
 let disposed
 
@@ -35,13 +36,16 @@ const settings = {
   },
   get(namespace) {
     assert.equal(namespace, 'terminal')
-    return { toggleShortcut: 'ctrl+`', shellCommand: '' }
+    return { toggleShortcut: 'meta+j', shellCommand: '' }
   },
 }
 
 const ctx = {
   webServer: {
-    register() { return () => {} },
+    register(route) {
+      registeredRoute = route
+      return () => {}
+    },
     registerUpgrade() { return () => {} },
   },
   get() { return undefined },
@@ -58,7 +62,25 @@ try {
   apply(ctx)
   assert.equal(registeredNamespace, 'terminal')
   assert.equal(watched, true)
+  assert.equal(registeredRoute?.path, '/terminal-panel')
+
+  let status
+  let body
+  await registeredRoute.handler({
+    headers: {},
+    method: 'GET',
+    url: '/terminal-panel/config',
+  }, {
+    writeHead(nextStatus) { status = nextStatus },
+    end(text) { body = text },
+  })
+  assert.equal(status, 200)
+  assert.deepEqual(JSON.parse(body), {
+    toggleShortcut: 'meta+j',
+    shellCommand: '',
+  })
   console.log('PASS: DSH 0.1.2-rc.1 settings registration works without settingsNamespace()')
+  console.log('PASS: settings value meta+j reaches the browser config route')
 } finally {
   disposed?.()
   delete process.env.DSH_PLUGIN_TERMINAL_DATA
