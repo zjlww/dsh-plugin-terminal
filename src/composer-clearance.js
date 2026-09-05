@@ -10,17 +10,18 @@ export const COMPOSER_SEAT_TERMINAL_Z_INDEX = "10";
 
 /**
  * Reserve vertical space beneath the composer while the fixed terminal panel
- * is mounted. The margin participates in DSH's flex layout, moving the
- * composer upward and shrinking the message viewport by the same amount.
+ * is mounted. Bottom padding keeps the composer content directly above the
+ * terminal and is included in DSH's composer-seat offsetHeight measurement,
+ * so its chat viewport and scroll anchoring move upward by the same amount.
  *
- * The previous inline margin and stacking layer are restored on unmount so
+ * The previous inline padding and stacking layer are restored on unmount so
  * this plugin does not erase layout state owned by DSH or another extension.
  */
 export function createComposerClearance(rootEl) {
   const seat = rootEl?.closest?.(COMPOSER_SEAT_SELECTOR) ?? null;
   if (seat === null) return null;
 
-  const previousMarginBottom = seat.style.marginBottom;
+  const previousPaddingBottom = seat.style.paddingBottom;
   const previousZIndex = seat.style.zIndex;
   let restored = false;
 
@@ -31,13 +32,13 @@ export function createComposerClearance(rootEl) {
     setHeight(height) {
       if (restored) return 0;
       const pixels = Number.isFinite(height) ? Math.max(0, Math.round(height)) : 0;
-      seat.style.marginBottom = pixels + "px";
+      seat.style.paddingBottom = pixels + "px";
       return pixels;
     },
     restore() {
       if (restored) return;
       restored = true;
-      seat.style.marginBottom = previousMarginBottom;
+      seat.style.paddingBottom = previousPaddingBottom;
       seat.style.zIndex = previousZIndex;
     },
   };

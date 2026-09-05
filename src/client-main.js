@@ -435,10 +435,11 @@ function TerminalPanel(props) {
   /** conversation-column geometry: the panel never covers the side rails */
   const [geo, setGeo] = useState({ left: 0, width: window.innerWidth });
 
-  /* The terminal stays pinned to the viewport bottom. Reserve its measured
-   * height below DSH's explicit composer seat so the sticky composer and the
-   * scrollable message area move upward instead of sitting behind the panel.
-   * The reservation follows collapsed, expanded, and drag-resized heights. */
+  /* The terminal stays pinned to the viewport bottom. Add its measured height
+   * as bottom padding on DSH's explicit composer seat so DSH includes the
+   * clearance in its own offsetHeight-based viewport/scroll calculations.
+   * This anchors the composer directly above the terminal tab bar through
+   * collapsed, expanded, and drag-resized heights. */
   const { useLayoutEffect } = React;
   useLayoutEffect(() => {
     const rootEl = rootRef.current;
